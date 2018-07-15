@@ -112,12 +112,13 @@ lldd()
 {
     # list directories
     # with full path names
+    whereiwuz=$(pwd)
     if [[ -d "$1" ]]
     then
         cd $1
     fi
 
-   ls -lQtrh --time-style=long-iso     |\
+    ls -lQtrh --time-style=long-iso    |\
                              grep '^d' |\
              perl -pe 's{"}{'`pwd`'/}' |\
                         sed -e's/"//g'
@@ -192,6 +193,7 @@ llhdd()
 {
     # list hidden directories
     # with full path names
+    whereiwuz=$(pwd)
     if [[ -d "$1" ]]
     then
         cd $1
@@ -579,6 +581,11 @@ pkpath()
 
     for e in ${pth_items[@]}
     do
+        #
+        # Only append path entrys for
+        # directories that exist on this 
+        # host
+        #
         if [ -d "$e" ]
         then
             #
@@ -658,7 +665,15 @@ instantiate_HISTFILE()
         if [[ 0 -ne $ERROR_CODE ]]
         then
             #
-            # Process is not running
+            # I embed the process id of each bash
+            # history file in the name of the file. 
+            # 
+            # If we get here, then the
+            # Process that created this history
+            # file is not running. So I can archive 
+            # the file without yanking the rug out
+            # from under a bash shell running on 
+            # another console session
             #
             if [ -f $i ]
             then
@@ -741,6 +756,8 @@ then
     xhost + > /dev/null 2>&1
     instantiate_HISTFILE
     setPS1
+else
+    ; # This shell is not interactive
 fi
 #
 if [ "0" != "$UID" ]
