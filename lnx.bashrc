@@ -108,7 +108,7 @@ lld()
     ls -ltrh --time-style=long-iso $* | grep '^d'
 }
 
-lldd()
+llddold()
 {
     # list directories
     # with full path names
@@ -130,6 +130,50 @@ lldd()
     fi
 }
 
+lldd()
+{
+    # list directories
+    # with full path names
+    if [[ $# -gt 0 ]]
+    then
+        param="$1"
+    else
+        param=$(pwd)
+    fi
+
+    paramIsDirectory=0
+    whereiwuz=$(pwd)
+    if [[ -d "$param" ]]
+    then
+        paramIsDirectory=1
+        targetDirectory=$param
+    else
+        targetDirectory=$(dirname $param)
+    fi
+
+    cd $targetDirectory
+
+    if [[ X1 == X$paramIsDirectory ]]
+    then
+        ls -lQtrh --time-style=long-iso |\
+                           grep    '^d' |\
+              perl -pe 's{"}{'`pwd`'/}' |\
+                         sed -e's/"//g'
+    else
+        d=${param##*/}
+        ls -lQtrh --time-style=long-iso $d|\
+                           grep    '^d'   |\
+              perl -pe 's{"}{'`pwd`'/}'   |\
+                         sed -e's/"//g'
+    fi 
+
+    whereiam=$(pwd)
+    if [[ X$whereiam != X$whereiwuz ]]
+    then
+        cd $whereiwuz
+    fi
+}
+
 llf()
 {
     # list files
@@ -141,16 +185,38 @@ llff()
 {
     # list files
     # with full path names
-    whereiwuz=$(pwd)
-    if [[ -d "$1" ]]
+    if [[ $# -gt 0 ]]
     then
-        cd $1
+        param="$1"
+    else
+        param=$(pwd)
     fi
 
-    ls -lQtrh --time-style=long-iso |\
-                       grep -v '^d' |\
-          perl -pe 's{"}{'`pwd`'/}' |\
-                     sed -e's/"//g'
+    paramIsDirectory=0
+    whereiwuz=$(pwd)
+    if [[ -d "$param" ]]
+    then
+        paramIsDirectory=1
+        targetDirectory=$param
+    else
+        targetDirectory=$(dirname $param)
+    fi
+
+    cd $targetDirectory
+
+    if [[ X1 == X$paramIsDirectory ]]
+    then
+        ls -lQtrh --time-style=long-iso |\
+                           grep -v '^d' |\
+              perl -pe 's{"}{'`pwd`'/}' |\
+                         sed -e's/"//g'
+    else
+        f=$(basename $param)
+        ls -lQtrh --time-style=long-iso $f|\
+                           grep -v '^d'   |\
+              perl -pe 's{"}{'`pwd`'/}'   |\
+                         sed -e's/"//g'
+    fi 
 
     whereiam=$(pwd)
     if [[ X$whereiam != X$whereiwuz ]]
@@ -314,10 +380,37 @@ ss()
 {
     if [ $# -gt 0 ]
     then
-        dumpDirectoryHistory.pl  | \
-        egrep -e "$@"
+        dumpDirectoryHistory.pl  |\
+        egrep -e "$@"            |\
+        tail -30
     else
-        dumpDirectoryHistory.pl
+        dumpDirectoryHistory.pl  |\
+        tail -30
+    fi
+}
+
+sss()
+{
+    if [ $# -gt 0 ]
+    then
+        dumpDirectoryHistory.pl  |\
+        egrep -e "$@"            |\
+        tail -90
+    else
+        dumpDirectoryHistory.pl  |\
+        tail -90
+    fi
+}
+ssss()
+{
+    if [ $# -gt 0 ]
+    then
+        dumpDirectoryHistory.pl  |\
+        egrep -e "$@"            |\
+        tail -8191
+    else
+        dumpDirectoryHistory.pl  |\
+        tail -8191
     fi
 }
 
@@ -604,6 +697,7 @@ lshd(){
 }
 alias listhd=lshd
 alias lsdisk=lshd
+alias lsdsk=lshd
 
 viewpdf(){
     logfile=$(printf '%s%06d%s%04d%s' "/var/log/user/$(ds)." "$$" "." "$UID" ".vuepdf.log")
@@ -697,6 +791,55 @@ instantiate_HISTFILE()
     done
 }
 
+dcaptr()
+{
+    if [[ $# -gt 0 ]]
+    then
+        param="$1"
+        if [[ -e "$param" ]]
+        then
+            trimmedparam=$(echo $param|sed -e 's-/$--')
+            7z a -spf $(ds).${trimmedparam}.7z $param
+        else
+            echo "$param not found"
+        fi
+    else
+        echo "capture what?"
+    fi
+}
+alias capture=dcaptr
+alias cap=dcaptr
+undcaptr()
+{
+    archive2uncap=$1
+    outdir=$(echo $archive2uncap | sed -E 's/(^([0-9]{8}[.][0-9]{6}[.][0-9]{9}))(..*[.]7z$)/\2/')
+    if [[ X$archive2uncap != X$outdir ]]
+    then
+        if [[ ! -d $outdir ]]
+        then
+            mkdir $outdir
+            ERROR_CODE=$?
+        fi
+        if [[ 0 -eq $ERROR_CODE ]]
+        then
+            cp $archive2uncap $outdir
+            cd $outdir
+            ERROR_CODE=$?
+            if [[ 0 -eq $ERROR_CODE ]]
+            then
+                7z x -spf $archive2uncap
+                rm $archive2uncap
+            fi
+        fi
+        cd ..
+        tree $outdir
+    else
+        echo "7z archive name must match '^([0-9]{8}[.][0-9]{6}[.][0-9]{9}))(..*[.]7z$)'"
+    fi
+}
+alias uncap=undcaptr
+alias uncapture=undcaptr
+
 # Source global definitions
 if [ -f /etc/bashrc ]
 then
@@ -757,7 +900,7 @@ then
     instantiate_HISTFILE
     setPS1
 else
-    ; # This shell is not interactive
+    : # This shell is not interactive
 fi
 #
 if [ "0" != "$UID" ]
