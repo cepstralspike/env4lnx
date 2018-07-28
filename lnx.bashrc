@@ -799,6 +799,23 @@ dcaptr()
         if [[ -e "$param" ]]
         then
             trimmedparam=$(echo $param|sed -e 's-/$--')
+            if [[ -d $trimmedparam ]]
+            then
+                if [[ -f "$trimmedparam/build.gradle" ]]
+                then
+                    whereiwuz=$(pwd)
+                    cd $trimmedparam
+                    gradle clean
+                    cd $whereiwuz
+                fi
+                if [[ -f "$trimmedparam/pom.xml" ]]
+                then
+                    whereiwuz=$(pwd)
+                    cd $trimmedparam
+                    mvn clean
+                    cd $whereiwuz
+                fi
+            fi
             7z a -spf $(ds).${trimmedparam}.7z $param
         else
             echo "$param not found"
@@ -874,7 +891,6 @@ then
    fi
 fi
 export SDKMANROOT=$HOME/.sdkman
-#export JAVA_HOME=/opt/jdk1.8
 export CLASSPATH=/opt/idea/lib
 export SCALA_HOME=/opt/scala
 export GOROOT=/opt/go
