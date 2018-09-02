@@ -605,11 +605,8 @@ supath()
     idx=0
     declare -a pth_items
     pth_items[$((idx++))]=$HOME/bin
-    pth_items[$((idx++))]=/opt/samba/sbin
-    pth_items[$((idx++))]=/opt/samba/bin
     pth_items[$((idx++))]=/opt/vim/bin
     pth_items[$((idx++))]=/opt/bin
-    pth_items[$((idx++))]=/opt/smartgit/bin
     for e in ${pth_items[@]}
     do
         if [ -d "$e" ]
@@ -622,6 +619,7 @@ supath()
         fi
     done
     export PATH="$prefix${PATH:+:}${PATH}"
+    pathfixup PATH
 }
 
 pkpath()
@@ -654,6 +652,8 @@ pkpath()
 
     pth_items[$((idx++))]=$HOME/android-platform-tools
     pth_items[$((idx++))]=$HOME/Android/Sdk/ndk-bundle
+    pth_items[$((idx++))]=/opt/android-studio/bin
+    pth_items[$((idx++))]=/opt/flutter/bin
     pth_items[$((idx++))]=/opt/node-v8.9.4-linux-x64/bin
     pth_items[$((idx++))]=$GOROOT/bin
     pth_items[$((idx++))]=$GOPATH/bin
@@ -806,6 +806,7 @@ dcaptr()
                     whereiwuz=$(pwd)
                     cd $trimmedparam
                     gradle clean
+                    find -name '*.class' -exec rm {} \;
                     cd $whereiwuz
                 fi
                 if [[ -f "$trimmedparam/pom.xml" ]]
@@ -957,7 +958,6 @@ else
     supath
 fi
 
-
 pathfixup PATH
 
 touch $HOME/.dhist
@@ -985,18 +985,32 @@ then
     export logdir=$LOGDIR
 fi
 
+if [[ X$USER == Xroot ]]
+then
+    export BASHLOGOUT=.bash_logout
+    export bashlogout=$BASHLOGOUT
+
+    export PROFILE=.profile
+    export profile=$PROFILE
+    
+    export BASHRC=.bashrc
+    export bashrc=$BASHRC
+    
+    export LOGDIR=/var/log/user
+    export logdir=$LOGDIR
+fi
+
 export ctoc="/root/00/log/tox/$HOSTNAME.slash.toc.ezn.txt"
 
-if [[ X$USER == Xnomad ]]
+export SDKMAN_DIR=$HOME/.sdkman
+if [[ -d $SDKMAN_DIR ]]
 then
-    #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-    export SDKMAN_DIR=/home/nomad/.sdkman
     SDKINIT=$SDKMANROOT/bin/sdkman-init.sh
     if [[ -s $SDKINIT ]]
     then
     . $SDKINIT
     fi
+    pathfixup PATH
 fi
-
 export BEENTHEREDONETHAT=yup
 
