@@ -816,7 +816,8 @@ dcaptr()
                     cd $whereiwuz
                 fi
             fi
-            7z a -spf $(ds).${trimmedparam}.7z $param
+            destArchive=$(echo -n $(ds).${trimmedparam}.7z|sed -e 's/[.][.]*/./g')
+            7z a -spf $destArchive $trimmedparam
         else
             echo "$param not found"
         fi
