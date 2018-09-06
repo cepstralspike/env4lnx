@@ -158,13 +158,15 @@ lldd()
         ls -lQtrh --time-style=long-iso |\
                            grep    '^d' |\
               perl -pe 's{"}{'`pwd`'/}' |\
-                         sed -e's/"//g'
+                         sed -e's/"//g' |\
+                      sed -e 's-//-/-g'
     else
         d=${param##*/}
         ls -lQtrh --time-style=long-iso $d|\
                            grep    '^d'   |\
               perl -pe 's{"}{'`pwd`'/}'   |\
-                         sed -e's/"//g'
+                         sed -e's/"//g'   |\
+                      sed -e 's-//-/-g'
     fi 
 
     whereiam=$(pwd)
@@ -209,13 +211,15 @@ llff()
         ls -lQtrh --time-style=long-iso |\
                            grep -v '^d' |\
               perl -pe 's{"}{'`pwd`'/}' |\
-                         sed -e's/"//g'
+                         sed -e's/"//g' |\
+                      sed -e 's-//-/-g'
     else
         f=$(basename $param)
         ls -lQtrh --time-style=long-iso $f|\
                            grep -v '^d'   |\
               perl -pe 's{"}{'`pwd`'/}'   |\
-                         sed -e's/"//g'
+                         sed -e's/"//g'   |\
+                      sed -e 's-//-/-g'
     fi 
 
     whereiam=$(pwd)
@@ -607,6 +611,7 @@ supath()
     pth_items[$((idx++))]=$HOME/bin
     pth_items[$((idx++))]=/opt/vim/bin
     pth_items[$((idx++))]=/opt/bin
+    pth_items[$((idx++))]=/opt/google/chrome
     for e in ${pth_items[@]}
     do
         if [ -d "$e" ]
@@ -739,6 +744,7 @@ instantiate_HISTFILE()
         --search_path $(dirname  $HISTFILE)  \
         --output_path $(dirname  $HISTFILE)  \
         --output_file $(basename $HISTFILE)
+
 
     export HISTSIZE=$((65535 << 2))
     export HISTFILESIZE=$(($HISTSIZE << 4))
@@ -957,6 +963,7 @@ then
 else
     supath
 fi
+
 
 pathfixup PATH
 
