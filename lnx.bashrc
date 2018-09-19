@@ -84,14 +84,51 @@ vvr()
     vim -R $*
 }
 
+
 lll()
 {
-    # list files and directories
+    # list files
     # with full path names
-    ls --group-directories-first -lQtrh \
-               --time-style=long-iso $*|\
-             perl -pe 's{"}{'`pwd`'/}' |\
-                        sed -e's/"//g'
+    if [[ $# -gt 0 ]]
+    then
+        param="$1"
+    else
+        param=$(pwd)
+    fi
+
+    paramIsDirectory=0
+    whereiwuz=$(pwd)
+    if [[ -d "$param" ]]
+    then
+        paramIsDirectory=1
+        targetDirectory=$param
+    else
+        targetDirectory=$(dirname $param)
+    fi
+
+    cd $targetDirectory
+
+    if [[ X1 == X$paramIsDirectory ]]
+    then
+        ls --group-directories-first -lQtrh --time-style=long-iso |\
+                                        perl -pe 's{"}{'`pwd`'/}' |\
+                                                   sed -e's/"//g' |\
+                                                sed -e 's-//-/-g' |\
+                                                 tail --lines +2
+    else
+        f=$(basename $param)
+        ls --group-directories-first -lQtrh --time-style=long-iso $f|\
+                                        perl -pe 's{"}{'`pwd`'/}'   |\
+                                                   sed -e's/"//g'   |\
+                                                sed -e 's-//-/-g'   |\
+                                                 tail --lines +2
+    fi 
+
+    whereiam=$(pwd)
+    if [[ X$whereiam != X$whereiwuz ]]
+    then
+        cd $whereiwuz
+    fi
 }
 
 ll()
@@ -106,28 +143,6 @@ lld()
     # list directories
     # with only the dir name
     ls -ltrh --time-style=long-iso $* | grep '^d'
-}
-
-llddold()
-{
-    # list directories
-    # with full path names
-    whereiwuz=$(pwd)
-    if [[ -d "$1" ]]
-    then
-        cd $1
-    fi
-
-    ls -lQtrh --time-style=long-iso    |\
-                             grep '^d' |\
-             perl -pe 's{"}{'`pwd`'/}' |\
-                        sed -e's/"//g'
-
-    whereiam=$(pwd)
-    if [[ X$whereiam != X$whereiwuz ]]
-    then
-        cd $whereiwuz
-    fi
 }
 
 lldd()
@@ -180,7 +195,42 @@ llf()
 {
     # list files
     # with only the file name
-    ls -ltrh --time-style=long-iso $* | grep -v '^d'
+    if [[ $# -gt 0 ]]
+    then
+        param="$1"
+    else
+        param=$(pwd)
+    fi
+
+    paramIsDirectory=0
+    whereiwuz=$(pwd)
+    if [[ -d "$param" ]]
+    then
+        paramIsDirectory=1
+        targetDirectory=$param
+    else
+        targetDirectory=$(dirname $param)
+    fi
+
+    cd $targetDirectory
+    
+    if [[ X1 == X$paramIsDirectory ]]
+    then
+        ls -ltrh --time-style=long-iso |\
+                   egrep -v -e '^[dl]' |\
+                       tail --lines +2
+    else
+        echo $param
+        ls -ltrh --time-style=long-iso $*  |\
+                   egrep -v -e '^[dl]'     |\
+                       tail --lines +2
+    fi 
+
+    whereiam=$(pwd)
+    if [[ X$whereiam != X$whereiwuz ]]
+    then
+        cd $whereiwuz
+    fi
 }
 
 llff()
@@ -654,7 +704,8 @@ pkpath()
         pth_items[$((idx++))]=$SCALA_HOME/bin
     fi
 
-
+    pth_items[$((idx++))]=$HOME/.cargo/bin
+    pth_items[$((idx++))]=$HOME/03/exa/target/debug
     pth_items[$((idx++))]=$HOME/android-platform-tools
     pth_items[$((idx++))]=$HOME/Android/Sdk/ndk-bundle
     pth_items[$((idx++))]=/opt/android-studio/bin
@@ -744,7 +795,6 @@ instantiate_HISTFILE()
         --search_path $(dirname  $HISTFILE)  \
         --output_path $(dirname  $HISTFILE)  \
         --output_file $(basename $HISTFILE)
-
 
     export HISTSIZE=$((65535 << 2))
     export HISTFILESIZE=$(($HISTSIZE << 4))
@@ -898,7 +948,6 @@ then
       echo "======================================"
    fi
 fi
-export SDKMANROOT=$HOME/.sdkman
 export CLASSPATH=/opt/idea/lib
 export SCALA_HOME=/opt/scala
 export GOROOT=/opt/go
@@ -907,7 +956,7 @@ export PROMPT_COMMAND=prompt_command
 export SVN_EDITOR=vvv
 export dbx=$HOME/Dropbox
 export VIMBACKUPDIR=$HOME/.vimbk
-export vimversion=vim81
+export vimversion=$(cat $HOME/.vimversion)
 export TEMP=/tmp
 for d2check in $dbx $VIMBACKUPDIR
 do
@@ -964,55 +1013,43 @@ else
     supath
 fi
 
-
 pathfixup PATH
 
 touch $HOME/.dhist
 shopt -s histappend
 shopt -s cmdhist
 shopt -s no_empty_cmd_completion
+
+export VIMRC=$(readlink -f $HOME/.vimrc)
+export vimrc=$VIMRC
+
+export BASHLOGOUT=$(readlink -f $HOME/.bash_logout)
+export bashlogout=$BASHLOGOUT
+
+export PROFILE=$(readlink -f $HOME/.profile)
+export profile=$PROFILE
+
+export BASHRC=$(readlink -f $HOME/.bashrc)
+export bashrc=$BASHRC
+    
+export LOGDIR=/var/log/user
+export logdir=$LOGDIR
+
 if [[ X$USER == Xnomad ]]
 then
-    export BASHLOGOUT=/home/share/nomad/env4lnx/lnx.bash_logout
-    export bashlogout=$BASHLOGOUT
-
-    export PROFILE=/home/share/nomad/env4lnx/lnx.profile
-    export profile=$PROFILE
-    
-    export BASHRC=/home/share/nomad/env4lnx/lnx.bashrc
-    export bashrc=$BASHRC
-    
     export ANDROID_HOME=$HOME/Android/Sdk
     export android_home=$ANDROID_HOME
 
     export NDK=$ANDROID_HOME/ndk-bundle
     export ndk=$NDK
-
-    export LOGDIR=/var/log/user
-    export logdir=$LOGDIR
-fi
-
-if [[ X$USER == Xroot ]]
-then
-    export BASHLOGOUT=.bash_logout
-    export bashlogout=$BASHLOGOUT
-
-    export PROFILE=.profile
-    export profile=$PROFILE
-    
-    export BASHRC=.bashrc
-    export bashrc=$BASHRC
-    
-    export LOGDIR=/var/log/user
-    export logdir=$LOGDIR
 fi
 
 export ctoc="/root/00/log/tox/$HOSTNAME.slash.toc.ezn.txt"
 
-export SDKMAN_DIR=$HOME/.sdkman
+export SDKMANROOT=$(readlink -f $HOME/.sdkman)
 if [[ -d $SDKMAN_DIR ]]
 then
-    SDKINIT=$SDKMANROOT/bin/sdkman-init.sh
+    SDKINIT=$(readlink -f $SDKMANROOT/bin/sdkman-init.sh)
     if [[ -s $SDKINIT ]]
     then
     . $SDKINIT
