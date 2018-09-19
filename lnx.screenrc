@@ -1,0 +1,19 @@
+shell -$SHELL
+startup_message off
+bindkey -k F2 next     # F12 is next screen
+bindkey -k F1 prev     # F11 is previous screen
+defscrollback 65535
+deflog on
+#
+# 'HISTWHEN' Needs to be defined in shell 
+# for this to work as intended
+#
+logfile /var/log/user/screen.$HISTWHEN.%n
+screen -t s0
+screen -t s1
+screen -t s2
+screen -t mc mc -a     # midnight commander with ascii borders
+log off                # dont log data on midnight commander screen
+screen -t htop htop    # my favorite process monitor
+log off                # dont log data on htop screen
+next
