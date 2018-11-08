@@ -915,6 +915,24 @@ undcaptr()
 alias uncap=undcaptr
 alias uncapture=undcaptr
 
+minikube_start()
+{
+    minikube --alsologtostderr start --vm-driver=kvm2 &
+}
+alias mqstart='minikube_start'
+alias mq=minikube
+alias kk=kubectl
+
+watchio()
+{
+    sudo xfce4-terminal --command='iotop -oPa' --hide-menubar --maximize 2>/dev/null &
+}
+
+aatop()
+{
+    sudo xfce4-terminal --command='atop' --hide-menubar --maximize 2>/dev/null &
+}
+
 # Source global definitions
 if [ -f /etc/bashrc ]
 then
@@ -1044,7 +1062,14 @@ then
     export ndk=$NDK
 fi
 
-export ctoc="/root/00/log/tox/$HOSTNAME.slash.toc.ezn.txt"
+export ctoc="$HOME/00/log/tox/$HOSTNAME.slash.toc.ezn.txt"
+export tocdir="$HOME/00/log/tox"
+export tox=$tocdir
+
+if [[ X$(which kubectl) != X ]]
+then
+    source <(kubectl completion bash)
+fi
 
 export SDKMANROOT=$(readlink -f $HOME/.sdkman)
 if [[ -d $SDKMAN_DIR ]]
